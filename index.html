@@ -3,13 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceLearn Pro - Advanced Hands-Free Education</title>
+    <title>VoiceLearn Adventure - Interactive Learning Game</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -26,6 +21,9 @@
             --warning: #ffc107;
             --dark: #333;
             --light: #f8f9fa;
+            --character-primary: #4e54c8;
+            --character-secondary: #8f94fb;
+            --character-accent: #ff6b6b;
             --shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
         }
         
@@ -37,6 +35,7 @@
             align-items: center;
             padding: 20px;
             color: var(--dark);
+            overflow-x: hidden;
         }
         
         .container {
@@ -119,6 +118,163 @@
             align-items: center;
             justify-content: center;
             background: white;
+            position: relative;
+        }
+        
+        .character-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 200px;
+            z-index: 10;
+        }
+        
+        .character {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-origin: bottom center;
+        }
+        
+        .character-body {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            background: var(--character-primary);
+            border-radius: 40px 40px 0 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+        
+        .character-head {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: var(--character-primary);
+            border-radius: 50%;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+        
+        .character-face {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .character-eye {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 8px;
+        }
+        
+        .character-eye.left {
+            left: 8px;
+        }
+        
+        .character-eye.right {
+            right: 8px;
+        }
+        
+        .character-mouth {
+            position: absolute;
+            width: 20px;
+            height: 5px;
+            background: white;
+            border-radius: 0 0 10px 10px;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.3s;
+        }
+        
+        .character.happy .character-mouth {
+            height: 10px;
+            border-radius: 10px 10px 0 0;
+            background: var(--character-accent);
+        }
+        
+        .character.sad .character-mouth {
+            height: 5px;
+            border-radius: 0 0 10px 10px;
+            transform: translateX(-50%) rotate(180deg);
+        }
+        
+        .character.talking .character-mouth {
+            animation: talk 0.5s infinite alternate;
+        }
+        
+        @keyframes talk {
+            0% { height: 5px; }
+            100% { height: 10px; }
+        }
+        
+        .character-arm {
+            position: absolute;
+            width: 15px;
+            height: 60px;
+            background: var(--character-primary);
+            border-radius: 10px;
+            bottom: 70px;
+            z-index: 1;
+        }
+        
+        .character-arm.left {
+            left: 15px;
+            transform-origin: top center;
+            animation: wave-left 2s infinite alternate;
+        }
+        
+        .character-arm.right {
+            right: 15px;
+            transform-origin: top center;
+        }
+        
+        @keyframes wave-left {
+            0% { transform: rotate(-10deg); }
+            100% { transform: rotate(30deg); }
+        }
+        
+        .character.celebrating .character-arm.left {
+            animation: celebrate 0.5s infinite alternate;
+        }
+        
+        .character.celebrating .character-arm.right {
+            animation: celebrate 0.5s infinite alternate-reverse;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: rotate(-30deg); }
+            100% { transform: rotate(30deg); }
+        }
+        
+        .character-leg {
+            position: absolute;
+            width: 20px;
+            height: 70px;
+            background: var(--character-secondary);
+            border-radius: 10px 10px 0 0;
+            bottom: 0;
+            z-index: 1;
+        }
+        
+        .character-leg.left {
+            left: 35px;
+        }
+        
+        .character-leg.right {
+            right: 35px;
         }
         
         .voice-indicator {
@@ -383,12 +539,6 @@
             color: var(--success);
         }
         
-        .chart-container {
-            width: 100%;
-            height: 200px;
-            margin: 20px 0;
-        }
-        
         .start-btn {
             background: var(--primary);
             color: white;
@@ -479,6 +629,13 @@
                 border-right: none;
                 border-bottom: 1px solid rgba(0,0,0,0.1);
             }
+            
+            .character-container {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin: 20px auto;
+            }
         }
         
         /* Animations */
@@ -491,34 +648,61 @@
             animation: fadeIn 0.5s ease-out;
         }
         
-        /* 3D Effect for Options */
-        .option-3d {
-            transform-style: preserve-3d;
-            perspective: 1000px;
+        /* Speech bubble */
+        .speech-bubble {
+            position: absolute;
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            max-width: 200px;
+            bottom: 220px;
+            right: 180px;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         
-        .option-3d .option {
-            transform: translateZ(20px);
-            transition: transform 0.3s;
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
         }
         
-        .option-3d .option:hover {
-            transform: translateZ(30px);
+        .speech-bubble.show {
+            opacity: 1;
+        }
+        
+        /* Improved voice recognition feedback */
+        .confidence-meter {
+            height: 5px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="floating-icons">
-                <div class="floating-icon" style="top: 10%; left: 5%;"><i class="fas fa-microphone"></i></div>
-                <div class="floating-icon" style="top: 20%; left: 80%;"><i class="fas fa-brain"></i></div>
-                <div class="floating-icon" style="top: 70%; left: 10%;"><i class="fas fa-book"></i></div>
-                <div class="floating-icon" style="top: 60%; left: 85%;"><i class="fas fa-gamepad"></i></div>
+            <div class="floating-icons" id="floating-icons">
+                <!-- Floating icons will be added by JavaScript -->
             </div>
             <div class="header-content">
-                <h1>VoiceLearn Pro</h1>
-                <p class="subtitle">Advanced Hands-Free Education with AI Integration</p>
+                <h1>VoiceLearn Adventure</h1>
+                <p class="subtitle">Interactive Learning with Voice Control</p>
             </div>
         </header>
         
@@ -526,7 +710,7 @@
             <div class="left-panel">
                 <div>
                     <h2>Voice Control Center</h2>
-                    <p>Speak your answer - no hands needed!</p>
+                    <p>Speak clearly and naturally - the game understands you!</p>
                     
                     <div class="voice-status" id="voice-status">
                         Press the Start button to begin
@@ -534,6 +718,10 @@
                     
                     <div class="voice-indicator" id="voice-indicator">
                         <i class="fas fa-microphone"></i>
+                    </div>
+                    
+                    <div class="confidence-meter">
+                        <div class="confidence-level" id="confidence-level"></div>
                     </div>
                     
                     <div class="timer" id="timer">
@@ -564,12 +752,12 @@
                     <div class="command-list">
                         <h3>Voice Commands</h3>
                         <ul>
-                            <li><i class="fas fa-check-circle"></i> Say "Option A" or "A" to select</li>
-                            <li><i class="fas fa-check-circle"></i> Say "Next" for next question</li>
-                            <li><i class="fas fa-check-circle"></i> Say "Repeat" to hear question again</li>
-                            <li><i class="fas fa-check-circle"></i> Say "Score" to hear current score</li>
-                            <li><i class="fas fa-check-circle"></i> Say "Hint" for a hint</li>
-                            <li><i class="fas fa-check-circle"></i> Say "Skip" to skip question</li>
+                            <li><i class="fas fa-check-circle"></i> "Option A" or just "A"</li>
+                            <li><i class="fas fa-check-circle"></i> "Next question" or "Next"</li>
+                            <li><i class="fas fa-check-circle"></i> "Repeat question" or "Repeat"</li>
+                            <li><i class="fas fa-check-circle"></i> "What's my score?" or "Score"</li>
+                            <li><i class="fas fa-check-circle"></i> "Give me a hint" or "Hint"</li>
+                            <li><i class="fas fa-check-circle"></i> "Skip this question" or "Skip"</li>
                         </ul>
                     </div>
                     
@@ -596,15 +784,36 @@
             </div>
             
             <div class="game-area">
+                <div class="speech-bubble" id="speech-bubble">
+                    Hello! I'm Voxy, your learning assistant. Say "Start" to begin!
+                </div>
+                
+                <div class="character-container">
+                    <div class="character" id="character">
+                        <div class="character-body"></div>
+                        <div class="character-head">
+                            <div class="character-face">
+                                <div class="character-eye left"></div>
+                                <div class="character-eye right"></div>
+                                <div class="character-mouth"></div>
+                            </div>
+                        </div>
+                        <div class="character-arm left"></div>
+                        <div class="character-arm right"></div>
+                        <div class="character-leg left"></div>
+                        <div class="character-leg right"></div>
+                    </div>
+                </div>
+                
                 <div id="game-screen">
                     <div class="question-display fade-in">
                         <div class="question-category" id="question-category">General Knowledge</div>
                         <div class="question-text" id="question">
-                            Welcome to VoiceLearn Pro! Press the Start button to begin your hands-free learning journey.
+                            Welcome to VoiceLearn Adventure! Press the Start button to begin your interactive learning journey.
                         </div>
                     </div>
                     
-                    <div class="options option-3d">
+                    <div class="options">
                         <div class="option" data-value="A">
                             <span class="option-label">A)</span>
                             <span class="option-text" id="option-a">Loading...</span>
@@ -643,10 +852,6 @@
                     <div class="progress-bar">
                         <div class="progress" id="progress"></div>
                     </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="performance-chart"></canvas>
-                    </div>
                 </div>
                 
                 <div id="completion-screen" style="display: none;">
@@ -670,10 +875,6 @@
                             </div>
                         </div>
                         
-                        <div class="chart-container">
-                            <canvas id="results-chart"></canvas>
-                        </div>
-                        
                         <button class="start-btn" onclick="initGame()">
                             <i class="fas fa-redo"></i> Play Again
                         </button>
@@ -683,26 +884,12 @@
         </div>
         
         <footer>
-            <p>VoiceLearn Pro - Advanced Hands-Free Education with AI Integration | Created for GitHub Pages</p>
+            <p>VoiceLearn Adventure - Interactive Learning with Animated Character | Created for GitHub Pages</p>
         </footer>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Firebase configuration (replace with your own config)
-            const firebaseConfig = {
-                apiKey: "AIzaSyDummyKeyReplaceWithYourOwn",
-                authDomain: "voicelearn-pro.firebaseapp.com",
-                projectId: "voicelearn-pro",
-                storageBucket: "voicelearn-pro.appspot.com",
-                messagingSenderId: "123456789",
-                appId: "1:123456789:web:abcdef123456"
-            };
-            
-            // Initialize Firebase (commented out for demo - uncomment with your config)
-            // firebase.initializeApp(firebaseConfig);
-            // const db = firebase.firestore();
-            
             // DOM Elements
             const startBtn = document.getElementById('start-btn');
             const voiceIndicator = document.getElementById('voice-indicator');
@@ -728,6 +915,10 @@
             const accuracyStat = document.getElementById('accuracy');
             const currentStreakStat = document.getElementById('current-streak');
             const multiplierEl = document.getElementById('multiplier');
+            const character = document.getElementById('character');
+            const speechBubble = document.getElementById('speech-bubble');
+            const confidenceLevel = document.getElementById('confidence-level');
+            const floatingIcons = document.getElementById('floating-icons');
             
             // Game state
             let score = 0;
@@ -743,9 +934,6 @@
             let currentStreak = 0;
             let multiplier = 1;
             let currentDifficulty = 'easy';
-            let performanceData = [];
-            let performanceChart;
-            let resultsChart;
             
             // Enhanced questions database with categories and difficulty levels
             const questions = {
@@ -770,6 +958,20 @@
                         correctAnswer: "B",
                         category: "Mathematics",
                         hint: "It's one less than 57"
+                    },
+                    {
+                        question: "What is the largest mammal in the world?",
+                        options: ["African Elephant", "Blue Whale", "Giraffe", "Hippopotamus"],
+                        correctAnswer: "B",
+                        category: "Biology",
+                        hint: "It lives in the ocean"
+                    },
+                    {
+                        question: "Which of these is not a primary color?",
+                        options: ["Red", "Blue", "Green", "Yellow"],
+                        correctAnswer: "C",
+                        category: "Art",
+                        hint: "Think about the colors you can't mix from others"
                     }
                 ],
                 medium: [
@@ -793,6 +995,20 @@
                         correctAnswer: "D",
                         category: "Languages",
                         hint: "It's the official language of China"
+                    },
+                    {
+                        question: "What year did World War II end?",
+                        options: ["1943", "1945", "1947", "1950"],
+                        correctAnswer: "B",
+                        category: "History",
+                        hint: "It ended in the mid-1940s"
+                    },
+                    {
+                        question: "What is the hardest natural substance on Earth?",
+                        options: ["Gold", "Iron", "Diamond", "Platinum"],
+                        correctAnswer: "C",
+                        category: "Science",
+                        hint: "It's often used in jewelry"
                     }
                 ],
                 hard: [
@@ -816,83 +1032,63 @@
                         correctAnswer: "B",
                         category: "Biology",
                         hint: "It helps detoxify chemicals and metabolizes drugs"
+                    },
+                    {
+                        question: "In which year was the first iPhone released?",
+                        options: ["2005", "2007", "2009", "2010"],
+                        correctAnswer: "B",
+                        category: "Technology",
+                        hint: "It was released in the late 2000s"
+                    },
+                    {
+                        question: "What is the capital of Azerbaijan?",
+                        options: ["Baku", "Yerevan", "Tbilisi", "Ankara"],
+                        correctAnswer: "A",
+                        category: "Geography",
+                        hint: "It's a city on the Caspian Sea"
                     }
                 ]
             };
             
-            // Initialize performance chart
-            function initPerformanceChart() {
-                const ctx = document.getElementById('performance-chart').getContext('2d');
-                performanceChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10'],
-                        datasets: [{
-                            label: 'Performance',
-                            data: performanceData,
-                            borderColor: '#6a11cb',
-                            backgroundColor: 'rgba(106, 17, 203, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                min: 0,
-                                max: 100,
-                                ticks: {
-                                    callback: function(value) {
-                                        return value + '%';
-                                    }
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                });
+            // Add floating icons to header
+            function addFloatingIcons() {
+                const icons = ['fa-microphone', 'fa-brain', 'fa-book', 'fa-gamepad', 'fa-graduation-cap', 'fa-lightbulb'];
+                
+                for (let i = 0; i < 12; i++) {
+                    const icon = document.createElement('div');
+                    icon.className = 'floating-icon';
+                    icon.style.top = `${Math.random() * 100}%`;
+                    icon.style.left = `${Math.random() * 100}%`;
+                    icon.style.animationDuration = `${15 + Math.random() * 10}s`;
+                    icon.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    const iTag = document.createElement('i');
+                    iTag.className = `fas ${icons[Math.floor(Math.random() * icons.length)]}`;
+                    icon.appendChild(iTag);
+                    
+                    floatingIcons.appendChild(icon);
+                }
             }
             
-            // Initialize results chart
-            function initResultsChart() {
-                const ctx = document.getElementById('results-chart').getContext('2d');
-                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+            // Update character state
+            function updateCharacter(state, message = null) {
+                // Remove all states
+                character.classList.remove('happy', 'sad', 'talking', 'celebrating');
                 
-                resultsChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Correct', 'Incorrect'],
-                        datasets: [{
-                            data: [correctAnswers, totalAnswered - correctAnswers],
-                            backgroundColor: ['#28a745', '#dc3545'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Update performance data
-            function updatePerformanceData() {
-                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
-                performanceData.push(accuracy);
+                // Add new state
+                if (state) {
+                    character.classList.add(state);
+                }
                 
-                if (performanceChart) {
-                    performanceChart.update();
+                // Show speech bubble if message provided
+                if (message) {
+                    speechBubble.textContent = message;
+                    speechBubble.classList.add('show');
+                    
+                    // Hide after 3 seconds
+                    setTimeout(() => {
+                        speechBubble.classList.remove('show');
+                    }, 3000);
                 }
             }
             
@@ -929,7 +1125,7 @@
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                     recognition = new SpeechRecognition();
                     recognition.continuous = true;
-                    recognition.interimResults = false;
+                    recognition.interimResults = true;
                     recognition.lang = 'en-US';
                     
                     recognition.onstart = function() {
@@ -938,21 +1134,43 @@
                         voiceStatus.textContent = "Listening... Speak now";
                         startBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Stop Listening';
                         startBtn.style.backgroundColor = "#dc3545";
+                        updateCharacter('talking', "I'm listening...");
                     };
                     
                     recognition.onresult = function(event) {
                         // Ignore if system is currently speaking
                         if (isSpeaking) return;
                         
-                        const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-                        voiceStatus.textContent = `Heard: "${transcript}"`;
-                        processVoiceCommand(transcript);
+                        let finalTranscript = '';
+                        let interimTranscript = '';
+                        let confidence = 0;
+                        
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                                finalTranscript += event.results[i][0].transcript;
+                                confidence = event.results[i][0].confidence;
+                            } else {
+                                interimTranscript += event.results[i][0].transcript;
+                            }
+                        }
+                        
+                        // Update confidence meter
+                        confidenceLevel.style.width = `${confidence * 100}%`;
+                        
+                        if (finalTranscript) {
+                            const transcript = finalTranscript.trim().toLowerCase();
+                            voiceStatus.textContent = `Heard: "${transcript}"`;
+                            processVoiceCommand(transcript);
+                        } else if (interimTranscript) {
+                            voiceStatus.textContent = `Listening: "${interimTranscript}"`;
+                        }
                     };
                     
                     recognition.onerror = function(event) {
                         console.error('Speech recognition error', event.error);
                         if (event.error !== 'no-speech') {
                             voiceStatus.textContent = `Error: ${event.error}. Try speaking again.`;
+                            updateCharacter('sad', "I didn't catch that. Can you repeat?");
                         }
                         restartListening();
                     };
@@ -960,6 +1178,7 @@
                     recognition.onend = function() {
                         isListening = false;
                         voiceIndicator.classList.remove('listening');
+                        confidenceLevel.style.width = '0%';
                         if (gameStarted) {
                             voiceStatus.textContent = "Processing...";
                             setTimeout(startListening, 1000);
@@ -1030,18 +1249,17 @@
                 totalAnswered = 0;
                 currentStreak = 0;
                 multiplier = 1;
-                performanceData = [];
                 gameStarted = true;
                 gameScreen.style.display = "block";
                 completionScreen.style.display = "none";
                 updateScore();
                 loadQuestion();
                 startTimer();
-                initPerformanceChart();
                 
                 if (!recognition) {
                     initSpeechRecognition();
-                    readText("Welcome to Voice Learn Pro. Game started. Good luck!");
+                    updateCharacter('happy', "Let's start learning! Good luck!");
+                    readText("Welcome to Voice Learn Adventure. Game started. Good luck!");
                 } else {
                     startListening();
                 }
@@ -1081,6 +1299,9 @@
                     feedbackEl.textContent = "";
                     feedbackEl.className = "game-feedback";
                     
+                    // Update character
+                    updateCharacter('happy', `Question ${currentQuestion + 1}: ${q.category}`);
+                    
                     // Read the question aloud
                     readText(`Question ${currentQuestion + 1}: ${q.question}. Options: A: ${q.options[0]}, B: ${q.options[1]}, C: ${q.options[2]}, D: ${q.options[3]}`);
                 } else {
@@ -1101,12 +1322,18 @@
                 finalAccuracyEl.textContent = `${accuracy}%`;
                 
                 stopTimer();
-                initResultsChart();
                 unlockAchievements();
-                readText(`Game completed! Your final score is ${score} out of ${questions[currentDifficulty].length}. Your accuracy was ${accuracy} percent. Say "restart" to play again.`);
                 
-                // Save game data to Firebase (commented out for demo)
-                // saveGameData(score, accuracy, currentDifficulty);
+                // Update character based on performance
+                if (accuracy >= 80) {
+                    updateCharacter('celebrating', "Amazing job! You're a star student!");
+                } else if (accuracy >= 60) {
+                    updateCharacter('happy', "Good work! You're learning fast!");
+                } else {
+                    updateCharacter(null, "Good effort! Keep practicing to improve!");
+                }
+                
+                readText(`Game completed! Your final score is ${score} out of ${questions[currentDifficulty].length}. Your accuracy was ${accuracy} percent. Say "restart" to play again.`);
             }
             
             // Unlock achievements
@@ -1125,28 +1352,6 @@
                 if (seconds < 120) { // Less than 2 minutes
                     document.getElementById('achievement-3').classList.add('unlocked');
                 }
-            }
-            
-            // Save game data to Firebase
-            function saveGameData(score, accuracy, difficulty) {
-                // This would save to Firebase in a real implementation
-                console.log('Saving game data:', { score, accuracy, difficulty });
-                
-                // Example Firebase code (commented out for demo)
-                /*
-                db.collection("gameSessions").add({
-                    score: score,
-                    accuracy: accuracy,
-                    difficulty: difficulty,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then((docRef) => {
-                    console.log("Game data saved with ID: ", docRef.id);
-                })
-                .catch((error) => {
-                    console.error("Error saving game data: ", error);
-                });
-                */
             }
             
             // Update score
@@ -1177,6 +1382,7 @@
                     updateScore();
                     feedbackEl.textContent = "Correct! Well done!";
                     feedbackEl.className = "game-feedback correct";
+                    updateCharacter('happy', "Great job! That's correct!");
                     readText("Correct! Well done!");
                     
                     // Highlight the correct option
@@ -1192,6 +1398,7 @@
                     
                     feedbackEl.textContent = `Incorrect. The correct answer is ${q.correctAnswer}) ${q.options[q.correctAnswer.charCodeAt(0) - 65]}`;
                     feedbackEl.className = "game-feedback incorrect";
+                    updateCharacter('sad', `The correct answer was ${q.correctAnswer}. Don't worry, try the next one!`);
                     readText(`Incorrect. The correct answer is ${q.correctAnswer} ${q.options[q.correctAnswer.charCodeAt(0) - 65]}`);
                     
                     // Highlight correct and incorrect options
@@ -1205,7 +1412,6 @@
                 }
                 
                 updateStats();
-                updatePerformanceData();
                 
                 // Move to next question after a delay
                 setTimeout(() => {
@@ -1221,6 +1427,7 @@
                 
                 feedbackEl.textContent = `Hint: ${q.hint}`;
                 feedbackEl.className = "game-feedback";
+                updateCharacter(null, `Hint: ${q.hint}`);
                 readText(`Hint: ${q.hint}`);
                 
                 // Penalty for using hint
@@ -1232,6 +1439,7 @@
             function skipQuestion() {
                 feedbackEl.textContent = "Question skipped";
                 feedbackEl.className = "game-feedback";
+                updateCharacter(null, "Let's try the next question!");
                 readText("Question skipped");
                 
                 // Penalty for skipping
@@ -1253,6 +1461,7 @@
                     
                     // Set flag to indicate system is speaking
                     isSpeaking = true;
+                    updateCharacter('talking');
                     
                     const speech = new SpeechSynthesisUtterance(text);
                     speech.rate = 0.9;
@@ -1270,18 +1479,18 @@
                 }
             }
             
-            // Handle voice commands
+            // Improved voice command processing
             function processVoiceCommand(command) {
                 command = command.toLowerCase().trim();
                 console.log("Processing command:", command);
                 
-                // Check for specific command patterns
-                if (command === "start" && !gameStarted) {
+                // Check for specific command patterns with improved matching
+                if ((command.includes("start") || command.includes("begin")) && !gameStarted) {
                     initGame();
                     return;
                 }
                 
-                if (command === "restart") {
+                if (command.includes("restart") || command.includes("play again")) {
                     initGame();
                     return;
                 }
@@ -1291,58 +1500,39 @@
                 const questionsByDifficulty = questions[currentDifficulty];
                 if (currentQuestion >= questionsByDifficulty.length) return;
                 
-                // More precise command matching
-                if (/^(option\s*)?(a|1|one)$/i.test(command)) {
+                // More flexible command matching
+                if (command.includes("option a") || command.includes(" a ") || command === "a" || command.includes("answer a") || command.includes("select a")) {
                     checkAnswer("A");
-                } else if (/^(option\s*)?(b|2|two)$/i.test(command)) {
+                } else if (command.includes("option b") || command.includes(" b ") || command === "b" || command.includes("answer b") || command.includes("select b")) {
                     checkAnswer("B");
-                } else if (/^(option\s*)?(c|3|three)$/i.test(command)) {
+                } else if (command.includes("option c") || command.includes(" c ") || command === "c" || command.includes("answer c") || command.includes("select c")) {
                     checkAnswer("C");
-                } else if (/^(option\s*)?(d|4|four)$/i.test(command)) {
+                } else if (command.includes("option d") || command.includes(" d ") || command === "d" || command.includes("answer d") || command.includes("select d")) {
                     checkAnswer("D");
-                } else if (command === "next") {
+                } else if (command.includes("next") || command.includes("next question") || command.includes("skip") || command.includes("move on")) {
                     currentQuestion++;
                     loadQuestion();
-                } else if (command === "repeat") {
+                } else if (command.includes("repeat") || command.includes("say again") || command.includes("what was the question")) {
                     const q = questionsByDifficulty[currentQuestion];
                     readText(q.question + " Options: " + 
                         q.options.map((opt, i) => `${String.fromCharCode(65 + i)}: ${opt}`).join(", "));
-                } else if (command === "score") {
+                } else if (command.includes("score") || command.includes("my score") || command.includes("how am i doing")) {
                     readText(`Your current score is ${score}. You have answered ${correctAnswers} out of ${totalAnswered} questions correctly.`);
-                } else if (command === "hint") {
+                } else if (command.includes("hint") || command.includes("help") || command.includes("clue")) {
                     provideHint();
-                } else if (command === "skip") {
+                } else if (command.includes("skip") || command.includes("skip this")) {
                     skipQuestion();
                 } else {
                     // If command not recognized, provide feedback and keep listening
                     voiceStatus.textContent = "Command not recognized. Please try again.";
-                    readText("Sorry, I didn't understand that. Please try again.");
-                }
-            }
-            
-            // Add floating icons to header
-            function addFloatingIcons() {
-                const floatingIcons = document.querySelector('.floating-icons');
-                const icons = ['fa-microphone', 'fa-brain', 'fa-book', 'fa-gamepad', 'fa-graduation-cap', 'fa-lightbulb'];
-                
-                for (let i = 0; i < 10; i++) {
-                    const icon = document.createElement('div');
-                    icon.className = 'floating-icon';
-                    icon.style.top = `${Math.random() * 100}%`;
-                    icon.style.left = `${Math.random() * 100}%`;
-                    icon.style.animationDuration = `${15 + Math.random() * 10}s`;
-                    icon.style.animationDelay = `${Math.random() * 5}s`;
-                    
-                    const iTag = document.createElement('i');
-                    iTag.className = `fas ${icons[Math.floor(Math.random() * icons.length)]}`;
-                    icon.appendChild(iTag);
-                    
-                    floatingIcons.appendChild(icon);
+                    updateCharacter('sad', "I didn't understand that. Try saying 'Option A', 'B', 'C', or 'D'.");
+                    readText("Sorry, I didn't understand that. Please try saying option A, B, C, or D.");
                 }
             }
             
             // Initialize the page
             addFloatingIcons();
+            updateCharacter('happy', "Hello! I'm Voxy, your learning assistant. Say 'Start' to begin!");
             
             // Add click handlers for options (for accessibility)
             options.forEach(option => {
