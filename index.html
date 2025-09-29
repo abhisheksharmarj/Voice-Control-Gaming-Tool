@@ -3,112 +3,679 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceLearn - Hands-Free Education</title>
+    <title>VoiceLearn Pro - Advanced Hands-Free Education</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        /* --- आपके CSS जैसा ही रखा गया है --- */
-        * {margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-        body {background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; color: #333;}
-        .container {width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.95); border-radius: 20px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); overflow: hidden;}
-        header {background: #4e54c8; color: white; padding: 20px; text-align: center;}
-        h1 {font-size: 2.5rem; margin-bottom: 10px;}
-        .subtitle {font-size: 1.2rem; opacity: 0.9;}
-        .main-content {display: flex; min-height: 450px;}
-        .left-panel {flex: 1; background: #f8f9fa; padding: 25px; display: flex; flex-direction: column; justify-content: space-between;}
-        .game-area {flex: 2; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white;}
-        .voice-indicator {background: #4e54c8; color: white; border: none; border-radius: 50%; width: 80px; height: 80px; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; margin: 0 auto; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); transition: all 0.3s;}
-        .voice-indicator.listening {background: #ff4d4d; transform: scale(1.1); animation: pulse 1.5s infinite;}
-        @keyframes pulse {0% {box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7);} 70% {box-shadow: 0 0 0 15px rgba(255, 77, 77, 0);} 100% {box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);}}
-        .voice-status {text-align: center; margin: 20px 0; font-size: 1.1rem; min-height: 30px;}
-        .command-list {background: white; border-radius: 10px; padding: 15px; margin-top: 20px; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);}
-        .command-list h3 {margin-bottom: 10px; color: #4e54c8;}
-        .command-list ul {list-style: none; padding-left: 15px;}
-        .command-list li {margin-bottom: 8px; display: flex; align-items: center;}
-        .command-list i {color: #4e54c8; margin-right: 10px;}
-        .question-display {background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; width: 100%; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);}
-        .question-text {font-size: 1.5rem; margin-bottom: 15px;}
-        .options {display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;}
-        .option {background: #4e54c8; color: white; padding: 15px; border-radius: 10px; text-align: center; transition: all 0.3s;}
-        .option.highlighted {background: #3a3eb3; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);}
-        .score-board {display: flex; justify-content: space-around; width: 100%; margin-top: 20px;}
-        .score {background: #4e54c8; color: white; padding: 10px 20px; border-radius: 10px; font-weight: bold;}
-        .progress-bar {width: 100%; background: #e0e0e0; height: 10px; border-radius: 5px; margin-top: 20px; overflow: hidden;}
-        .progress {height: 100%; background: linear-gradient(90deg, #4e54c8 0%, #8f94fb 100%); width: 0%; transition: width 0.5s;}
-        .game-feedback {margin-top: 20px; font-weight: bold; font-size: 1.2rem; min-height: 30px; text-align: center;}
-        .correct {color: #28a745;} .incorrect {color: #dc3545;}
-        .game-complete {text-align: center; padding: 20px;}
-        .game-complete h2 {color: #4e54c8; margin-bottom: 15px;}
-        .start-btn {background: #4e54c8; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-size: 1.2rem; margin: 20px auto; cursor: pointer; display: block; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);}
-        .start-btn:hover {background: #3a3eb3; transform: translateY(-3px);}
-        footer {text-align: center; padding: 15px; background: #4e54c8; color: white;}
-        @media (max-width: 768px) {.main-content {flex-direction: column;} .options {grid-template-columns: 1fr;}}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff4d4d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --dark: #333;
+            --light: #f8f9fa;
+            --shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .floating-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .floating-icon {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.2;
+            animation: float 15s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100px) rotate(360deg); }
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            padding: 0;
+            min-height: 600px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            background: var(--light);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .game-area {
+            flex: 2;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        
+        .voice-indicator {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            font-size: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .voice-indicator.listening {
+            background: var(--accent);
+            transform: scale(1.1);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 77, 77, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+        }
+        
+        .voice-status {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.1rem;
+            min-height: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .command-list {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .command-list h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .command-list ul {
+            list-style: none;
+            padding-left: 15px;
+        }
+        
+        .command-list li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .command-list i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+        
+        .stats-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-panel h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .question-display {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .question-category {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .question-text {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .option.highlighted {
+            background: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .option.correct {
+            background: var(--success);
+        }
+        
+        .option.incorrect {
+            background: var(--accent);
+        }
+        
+        .option-label {
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .score {
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            background: #e0e0e0;
+            height: 12px;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            width: 0%;
+            transition: width 0.5s;
+            border-radius: 10px;
+        }
+        
+        .game-feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            min-height: 30px;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        
+        .correct {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--success);
+        }
+        
+        .incorrect {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--accent);
+        }
+        
+        .game-complete {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .game-complete h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .achievements {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .achievement {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 120px;
+        }
+        
+        .achievement i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .achievement.unlocked i {
+            color: var(--success);
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+        }
+        
+        .start-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            margin: 20px auto;
+            cursor: pointer;
+            display: block;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .start-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 15px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .difficulty-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .timer {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid rgba(0,0,0,0.1);
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* 3D Effect for Options */
+        .option-3d {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .option-3d .option {
+            transform: translateZ(20px);
+            transition: transform 0.3s;
+        }
+        
+        .option-3d .option:hover {
+            transform: translateZ(30px);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>VoiceLearn</h1>
-            <p class="subtitle">Hands-Free Educational Game for Everyone</p>
+            <div class="floating-icons">
+                <div class="floating-icon" style="top: 10%; left: 5%;"><i class="fas fa-microphone"></i></div>
+                <div class="floating-icon" style="top: 20%; left: 80%;"><i class="fas fa-brain"></i></div>
+                <div class="floating-icon" style="top: 70%; left: 10%;"><i class="fas fa-book"></i></div>
+                <div class="floating-icon" style="top: 60%; left: 85%;"><i class="fas fa-gamepad"></i></div>
+            </div>
+            <div class="header-content">
+                <h1>VoiceLearn Pro</h1>
+                <p class="subtitle">Advanced Hands-Free Education with AI Integration</p>
+            </div>
         </header>
-        
-        <button class="start-btn" id="start-btn">
-            <i class="fas fa-microphone"></i> Click to Start Voice Recognition
-        </button>
         
         <div class="main-content">
             <div class="left-panel">
                 <div>
-                    <h2>Voice Control</h2>
+                    <h2>Voice Control Center</h2>
                     <p>Speak your answer - no hands needed!</p>
-                    <div class="voice-status" id="voice-status">Press the Start button to begin</div>
-                    <div class="voice-indicator" id="voice-indicator"><i class="fas fa-microphone"></i></div>
+                    
+                    <div class="voice-status" id="voice-status">
+                        Press the Start button to begin
+                    </div>
+                    
+                    <div class="voice-indicator" id="voice-indicator">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    
+                    <div class="timer" id="timer">
+                        Time: 00:00
+                    </div>
+                    
+                    <div class="difficulty-selector">
+                        <div class="difficulty-btn active" data-difficulty="easy">Easy</div>
+                        <div class="difficulty-btn" data-difficulty="medium">Medium</div>
+                        <div class="difficulty-btn" data-difficulty="hard">Hard</div>
+                    </div>
+                    
+                    <button class="start-btn" id="start-btn">
+                        <i class="fas fa-microphone"></i> Start Voice Recognition
+                    </button>
+                    
+                    <div class="btn-group">
+                        <button class="action-btn" id="hint-btn">
+                            <i class="fas fa-lightbulb"></i> Hint
+                        </button>
+                        <button class="action-btn" id="skip-btn">
+                            <i class="fas fa-forward"></i> Skip
+                        </button>
+                    </div>
                 </div>
-                <div class="command-list">
-                    <h3>Voice Commands</h3>
-                    <ul>
-                        <li><i class="fas fa-check-circle"></i> Say "Option A" or "Option 1" to select</li>
-                        <li><i class="fas fa-check-circle"></i> Say "Next" for next question</li>
-                        <li><i class="fas fa-check-circle"></i> Say "Repeat" to hear question again</li>
-                        <li><i class="fas fa-check-circle"></i> Say "Score" to hear current score</li>
-                        <li><i class="fas fa-check-circle"></i> Say "Start" to begin the game</li>
-                    </ul>
+                
+                <div>
+                    <div class="command-list">
+                        <h3>Voice Commands</h3>
+                        <ul>
+                            <li><i class="fas fa-check-circle"></i> Say "Option A" or "A" to select</li>
+                            <li><i class="fas fa-check-circle"></i> Say "Next" for next question</li>
+                            <li><i class="fas fa-check-circle"></i> Say "Repeat" to hear question again</li>
+                            <li><i class="fas fa-check-circle"></i> Say "Score" to hear current score</li>
+                            <li><i class="fas fa-check-circle"></i> Say "Hint" for a hint</li>
+                            <li><i class="fas fa-check-circle"></i> Say "Skip" to skip question</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <h3>Game Statistics</h3>
+                        <div class="stat-item">
+                            <span>Questions Answered:</span>
+                            <span id="total-questions">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Correct Answers:</span>
+                            <span id="correct-answers">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Accuracy:</span>
+                            <span id="accuracy">0%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Current Streak:</span>
+                            <span id="current-streak">0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div class="game-area">
                 <div id="game-screen">
-                    <div class="question-display">
+                    <div class="question-display fade-in">
+                        <div class="question-category" id="question-category">General Knowledge</div>
                         <div class="question-text" id="question">
-                            Welcome to VoiceLearn! Press the Start button to begin.
+                            Welcome to VoiceLearn Pro! Press the Start button to begin your hands-free learning journey.
                         </div>
                     </div>
                     
-                    <div class="options">
-                        <div class="option" data-value="A">A) </div>
-                        <div class="option" data-value="B">B) </div>
-                        <div class="option" data-value="C">C) </div>
-                        <div class="option" data-value="D">D) </div>
+                    <div class="options option-3d">
+                        <div class="option" data-value="A">
+                            <span class="option-label">A)</span>
+                            <span class="option-text" id="option-a">Loading...</span>
+                        </div>
+                        <div class="option" data-value="B">
+                            <span class="option-label">B)</span>
+                            <span class="option-text" id="option-b">Loading...</span>
+                        </div>
+                        <div class="option" data-value="C">
+                            <span class="option-label">C)</span>
+                            <span class="option-text" id="option-c">Loading...</span>
+                        </div>
+                        <div class="option" data-value="D">
+                            <span class="option-label">D)</span>
+                            <span class="option-text" id="option-d">Loading...</span>
+                        </div>
                     </div>
                     
                     <div class="game-feedback" id="feedback"></div>
                     
                     <div class="score-board">
-                        <div class="score">Score: <span id="score">0</span></div>
-                        <div class="score">Question: <span id="question-number">0</span>/5</div>
+                        <div class="score">
+                            Score
+                            <div class="score-value" id="score">0</div>
+                        </div>
+                        <div class="score">
+                            Question
+                            <div class="score-value" id="question-number">0/10</div>
+                        </div>
+                        <div class="score">
+                            Multiplier
+                            <div class="score-value" id="multiplier">1x</div>
+                        </div>
                     </div>
                     
                     <div class="progress-bar">
                         <div class="progress" id="progress"></div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="performance-chart"></canvas>
                     </div>
                 </div>
                 
                 <div id="completion-screen" style="display: none;">
                     <div class="game-complete">
                         <h2>Game Completed!</h2>
-                        <p>Your final score is <span id="final-score">0</span> out of 5</p>
-                        <p>Say "Restart" to play again</p>
+                        <p>Your final score is <span id="final-score">0</span> out of <span id="total-questions-final">10</span></p>
+                        <p>Accuracy: <span id="final-accuracy">0%</span></p>
+                        
+                        <div class="achievements">
+                            <div class="achievement" id="achievement-1">
+                                <i class="fas fa-trophy"></i>
+                                <p>First Game</p>
+                            </div>
+                            <div class="achievement" id="achievement-2">
+                                <i class="fas fa-star"></i>
+                                <p>Perfect Score</p>
+                            </div>
+                            <div class="achievement" id="achievement-3">
+                                <i class="fas fa-bolt"></i>
+                                <p>Speed Run</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="results-chart"></canvas>
+                        </div>
+                        
                         <button class="start-btn" onclick="initGame()">
-                            <i class="fas fa-redo"></i> Restart Game
+                            <i class="fas fa-redo"></i> Play Again
                         </button>
                     </div>
                 </div>
@@ -116,12 +683,27 @@
         </div>
         
         <footer>
-            <p>Created for Hackathon - Voice Controlled Education for All</p>
+            <p>VoiceLearn Pro - Advanced Hands-Free Education with AI Integration | Created for GitHub Pages</p>
         </footer>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Firebase configuration (replace with your own config)
+            const firebaseConfig = {
+                apiKey: "AIzaSyDummyKeyReplaceWithYourOwn",
+                authDomain: "voicelearn-pro.firebaseapp.com",
+                projectId: "voicelearn-pro",
+                storageBucket: "voicelearn-pro.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef123456"
+            };
+            
+            // Initialize Firebase (commented out for demo - uncomment with your config)
+            // firebase.initializeApp(firebaseConfig);
+            // const db = firebase.firestore();
+            
+            // DOM Elements
             const startBtn = document.getElementById('start-btn');
             const voiceIndicator = document.getElementById('voice-indicator');
             const voiceStatus = document.getElementById('voice-status');
@@ -134,17 +716,214 @@
             const gameScreen = document.getElementById('game-screen');
             const completionScreen = document.getElementById('completion-screen');
             const finalScoreEl = document.getElementById('final-score');
-
-            let score = 0, currentQuestion = 0, recognition, isListening = false;
-
-            const questions = [
-                {question: "What is the capital of France?", options: ["Paris", "London", "Berlin", "Madrid"], correctAnswer: "A"},
-                {question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], correctAnswer: "B"},
-                {question: "What is 8 x 7?", options: ["54", "56", "64", "72"], correctAnswer: "B"},
-                {question: "Who painted the Mona Lisa?", options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"], correctAnswer: "C"},
-                {question: "What is the largest mammal?", options: ["African Elephant", "Blue Whale", "Giraffe", "Hippopotamus"], correctAnswer: "B"}
-            ];
-
+            const totalQuestionsFinal = document.getElementById('total-questions-final');
+            const finalAccuracyEl = document.getElementById('final-accuracy');
+            const questionCategory = document.getElementById('question-category');
+            const timerEl = document.getElementById('timer');
+            const hintBtn = document.getElementById('hint-btn');
+            const skipBtn = document.getElementById('skip-btn');
+            const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+            const totalQuestionsStat = document.getElementById('total-questions');
+            const correctAnswersStat = document.getElementById('correct-answers');
+            const accuracyStat = document.getElementById('accuracy');
+            const currentStreakStat = document.getElementById('current-streak');
+            const multiplierEl = document.getElementById('multiplier');
+            
+            // Game state
+            let score = 0;
+            let currentQuestion = 0;
+            let recognition;
+            let isListening = false;
+            let isSpeaking = false;
+            let gameStarted = false;
+            let timerInterval;
+            let seconds = 0;
+            let correctAnswers = 0;
+            let totalAnswered = 0;
+            let currentStreak = 0;
+            let multiplier = 1;
+            let currentDifficulty = 'easy';
+            let performanceData = [];
+            let performanceChart;
+            let resultsChart;
+            
+            // Enhanced questions database with categories and difficulty levels
+            const questions = {
+                easy: [
+                    {
+                        question: "What is the capital of France?",
+                        options: ["Paris", "London", "Berlin", "Madrid"],
+                        correctAnswer: "A",
+                        category: "Geography",
+                        hint: "It's known as the City of Light"
+                    },
+                    {
+                        question: "Which planet is known as the Red Planet?",
+                        options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                        correctAnswer: "B",
+                        category: "Astronomy",
+                        hint: "It's the fourth planet from the Sun"
+                    },
+                    {
+                        question: "What is 8 x 7?",
+                        options: ["54", "56", "64", "72"],
+                        correctAnswer: "B",
+                        category: "Mathematics",
+                        hint: "It's one less than 57"
+                    }
+                ],
+                medium: [
+                    {
+                        question: "Who painted the Mona Lisa?",
+                        options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
+                        correctAnswer: "C",
+                        category: "Art",
+                        hint: "He was also a famous inventor"
+                    },
+                    {
+                        question: "What is the chemical symbol for gold?",
+                        options: ["Go", "Gd", "Au", "Ag"],
+                        correctAnswer: "C",
+                        category: "Chemistry",
+                        hint: "It comes from the Latin word 'aurum'"
+                    },
+                    {
+                        question: "Which language has the most native speakers?",
+                        options: ["English", "Spanish", "Hindi", "Mandarin Chinese"],
+                        correctAnswer: "D",
+                        category: "Languages",
+                        hint: "It's the official language of China"
+                    }
+                ],
+                hard: [
+                    {
+                        question: "What is the speed of light in a vacuum?",
+                        options: ["299,792,458 m/s", "300,000,000 m/s", "299,792 km/s", "186,282 mi/s"],
+                        correctAnswer: "A",
+                        category: "Physics",
+                        hint: "It's approximately 300 million meters per second"
+                    },
+                    {
+                        question: "Who wrote 'One Hundred Years of Solitude'?",
+                        options: ["Jorge Luis Borges", "Gabriel Garcia Marquez", "Pablo Neruda", "Isabel Allende"],
+                        correctAnswer: "B",
+                        category: "Literature",
+                        hint: "He was a Colombian novelist"
+                    },
+                    {
+                        question: "What is the largest internal organ in the human body?",
+                        options: ["Brain", "Liver", "Heart", "Lungs"],
+                        correctAnswer: "B",
+                        category: "Biology",
+                        hint: "It helps detoxify chemicals and metabolizes drugs"
+                    }
+                ]
+            };
+            
+            // Initialize performance chart
+            function initPerformanceChart() {
+                const ctx = document.getElementById('performance-chart').getContext('2d');
+                performanceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10'],
+                        datasets: [{
+                            label: 'Performance',
+                            data: performanceData,
+                            borderColor: '#6a11cb',
+                            backgroundColor: 'rgba(106, 17, 203, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Initialize results chart
+            function initResultsChart() {
+                const ctx = document.getElementById('results-chart').getContext('2d');
+                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+                
+                resultsChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Correct', 'Incorrect'],
+                        datasets: [{
+                            data: [correctAnswers, totalAnswered - correctAnswers],
+                            backgroundColor: ['#28a745', '#dc3545'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update performance data
+            function updatePerformanceData() {
+                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+                performanceData.push(accuracy);
+                
+                if (performanceChart) {
+                    performanceChart.update();
+                }
+            }
+            
+            // Start timer
+            function startTimer() {
+                seconds = 0;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    timerEl.textContent = `Time: ${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+            
+            // Stop timer
+            function stopTimer() {
+                clearInterval(timerInterval);
+            }
+            
+            // Update statistics
+            function updateStats() {
+                totalQuestionsStat.textContent = totalAnswered;
+                correctAnswersStat.textContent = correctAnswers;
+                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+                accuracyStat.textContent = `${accuracy}%`;
+                currentStreakStat.textContent = currentStreak;
+                multiplierEl.textContent = `${multiplier}x`;
+            }
+            
+            // Initialize speech recognition
             function initSpeechRecognition() {
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -157,139 +936,423 @@
                         isListening = true;
                         voiceIndicator.classList.add('listening');
                         voiceStatus.textContent = "Listening... Speak now";
-                        startBtn.textContent = "Voice Recognition Active";
-                        startBtn.style.backgroundColor = "#28a745";
+                        startBtn.innerHTML = '<i class="fas fa-microphone-slash"></i> Stop Listening';
+                        startBtn.style.backgroundColor = "#dc3545";
                     };
                     
                     recognition.onresult = function(event) {
+                        // Ignore if system is currently speaking
+                        if (isSpeaking) return;
+                        
                         const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
                         voiceStatus.textContent = `Heard: "${transcript}"`;
                         processVoiceCommand(transcript);
                     };
                     
                     recognition.onerror = function(event) {
-                        voiceStatus.textContent = `Error: ${event.error}. Try speaking again.`;
+                        console.error('Speech recognition error', event.error);
+                        if (event.error !== 'no-speech') {
+                            voiceStatus.textContent = `Error: ${event.error}. Try speaking again.`;
+                        }
                         restartListening();
                     };
                     
                     recognition.onend = function() {
                         isListening = false;
                         voiceIndicator.classList.remove('listening');
-                        if (currentQuestion < questions.length) {
+                        if (gameStarted) {
+                            voiceStatus.textContent = "Processing...";
                             setTimeout(startListening, 1000);
                         }
                     };
+                    
+                    // Start listening
                     startListening();
+                    
                 } else {
-                    voiceStatus.textContent = "Speech recognition not supported. Use Chrome or Edge.";
+                    voiceStatus.textContent = "Speech recognition not supported in this browser. Try using Chrome or Edge.";
                 }
             }
-
+            
+            // Start listening function
             function startListening() {
-                if (recognition && !isListening) {
-                    try { recognition.start(); } catch {}
+                if (recognition && !isListening && !isSpeaking && gameStarted) {
+                    try {
+                        recognition.start();
+                    } catch (error) {
+                        console.error('Recognition start error:', error);
+                        setTimeout(startListening, 1000);
+                    }
                 }
             }
-
+            
+            // Start button event listener
             startBtn.addEventListener('click', function() {
-                if (!recognition) {
+                if (!gameStarted) {
+                    initGame();
+                } else if (!isListening) {
                     initSpeechRecognition();
-                    readText("Welcome to Voice Learn. Say start to begin the game.");
+                } else {
+                    recognition.stop();
                 }
             });
-
+            
+            // Hint button event listener
+            hintBtn.addEventListener('click', function() {
+                provideHint();
+            });
+            
+            // Skip button event listener
+            skipBtn.addEventListener('click', function() {
+                skipQuestion();
+            });
+            
+            // Difficulty buttons event listeners
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    difficultyBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentDifficulty = this.getAttribute('data-difficulty');
+                    
+                    if (gameStarted) {
+                        // Reload questions with new difficulty
+                        currentQuestion = 0;
+                        loadQuestion();
+                    }
+                });
+            });
+            
+            // Initialize game
             function initGame() {
-                score = 0; currentQuestion = 0;
+                score = 0;
+                currentQuestion = 0;
+                correctAnswers = 0;
+                totalAnswered = 0;
+                currentStreak = 0;
+                multiplier = 1;
+                performanceData = [];
+                gameStarted = true;
                 gameScreen.style.display = "block";
                 completionScreen.style.display = "none";
-                updateScore(); loadQuestion();
+                updateScore();
+                loadQuestion();
+                startTimer();
+                initPerformanceChart();
+                
+                if (!recognition) {
+                    initSpeechRecognition();
+                    readText("Welcome to Voice Learn Pro. Game started. Good luck!");
+                } else {
+                    startListening();
+                }
             }
-
+            
+            // Restart listening
             function restartListening() {
                 if (recognition) {
-                    try { recognition.stop(); } catch {}
+                    try {
+                        recognition.stop();
+                    } catch (error) {
+                        console.error('Recognition stop error:', error);
+                    }
                     setTimeout(startListening, 1000);
                 }
             }
-
+            
+            // Load question
             function loadQuestion() {
-                if (currentQuestion < questions.length) {
-                    const q = questions[currentQuestion];
+                const questionsByDifficulty = questions[currentDifficulty];
+                if (currentQuestion < questionsByDifficulty.length) {
+                    const q = questionsByDifficulty[currentQuestion];
                     questionEl.textContent = q.question;
-                    options.forEach((option, index) => {
-                        option.textContent = `${String.fromCharCode(65 + index)}) ${q.options[index]}`;
-                        option.classList.remove('highlighted');
+                    questionCategory.textContent = q.category;
+                    
+                    document.getElementById('option-a').textContent = q.options[0];
+                    document.getElementById('option-b').textContent = q.options[1];
+                    document.getElementById('option-c').textContent = q.options[2];
+                    document.getElementById('option-d').textContent = q.options[3];
+                    
+                    options.forEach(option => {
+                        option.classList.remove('correct', 'incorrect', 'highlighted');
                     });
-                    questionNumberEl.textContent = currentQuestion + 1;
-                    progressEl.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+                    
+                    questionNumberEl.textContent = `${currentQuestion + 1}/${questionsByDifficulty.length}`;
+                    progressEl.style.width = `${((currentQuestion + 1) / questionsByDifficulty.length) * 100}%`;
                     feedbackEl.textContent = "";
                     feedbackEl.className = "game-feedback";
-                    readText(q.question + " Options: " + q.options.map((opt, i) => `${String.fromCharCode(65+i)}: ${opt}`).join(", "));
+                    
+                    // Read the question aloud
+                    readText(`Question ${currentQuestion + 1}: ${q.question}. Options: A: ${q.options[0]}, B: ${q.options[1]}, C: ${q.options[2]}, D: ${q.options[3]}`);
                 } else {
-                    gameScreen.style.display = "none";
-                    completionScreen.style.display = "block";
-                    finalScoreEl.textContent = score;
-                    readText(`Game completed! Your final score is ${score} out of ${questions.length}. Say restart to play again.`);
+                    // Game over
+                    gameCompleted();
                 }
             }
-
-            function updateScore() { scoreEl.textContent = score; }
-
+            
+            // Game completed
+            function gameCompleted() {
+                gameStarted = false;
+                gameScreen.style.display = "none";
+                completionScreen.style.display = "block";
+                finalScoreEl.textContent = score;
+                totalQuestionsFinal.textContent = questions[currentDifficulty].length;
+                
+                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+                finalAccuracyEl.textContent = `${accuracy}%`;
+                
+                stopTimer();
+                initResultsChart();
+                unlockAchievements();
+                readText(`Game completed! Your final score is ${score} out of ${questions[currentDifficulty].length}. Your accuracy was ${accuracy} percent. Say "restart" to play again.`);
+                
+                // Save game data to Firebase (commented out for demo)
+                // saveGameData(score, accuracy, currentDifficulty);
+            }
+            
+            // Unlock achievements
+            function unlockAchievements() {
+                const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+                
+                // First game achievement
+                document.getElementById('achievement-1').classList.add('unlocked');
+                
+                // Perfect score achievement
+                if (score >= questions[currentDifficulty].length * 10) {
+                    document.getElementById('achievement-2').classList.add('unlocked');
+                }
+                
+                // Speed run achievement
+                if (seconds < 120) { // Less than 2 minutes
+                    document.getElementById('achievement-3').classList.add('unlocked');
+                }
+            }
+            
+            // Save game data to Firebase
+            function saveGameData(score, accuracy, difficulty) {
+                // This would save to Firebase in a real implementation
+                console.log('Saving game data:', { score, accuracy, difficulty });
+                
+                // Example Firebase code (commented out for demo)
+                /*
+                db.collection("gameSessions").add({
+                    score: score,
+                    accuracy: accuracy,
+                    difficulty: difficulty,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then((docRef) => {
+                    console.log("Game data saved with ID: ", docRef.id);
+                })
+                .catch((error) => {
+                    console.error("Error saving game data: ", error);
+                });
+                */
+            }
+            
+            // Update score
+            function updateScore() {
+                scoreEl.textContent = score;
+            }
+            
+            // Check answer
             function checkAnswer(answer) {
-                const q = questions[currentQuestion];
+                const questionsByDifficulty = questions[currentDifficulty];
+                const q = questionsByDifficulty[currentQuestion];
+                totalAnswered++;
+                
                 if (answer.toUpperCase() === q.correctAnswer) {
-                    score++; updateScore();
+                    // Correct answer
+                    score += 10 * multiplier;
+                    correctAnswers++;
+                    currentStreak++;
+                    
+                    // Increase multiplier for streaks
+                    if (currentStreak >= 3) {
+                        multiplier = 2;
+                    }
+                    if (currentStreak >= 5) {
+                        multiplier = 3;
+                    }
+                    
+                    updateScore();
                     feedbackEl.textContent = "Correct! Well done!";
                     feedbackEl.className = "game-feedback correct";
                     readText("Correct! Well done!");
+                    
+                    // Highlight the correct option
+                    options.forEach(option => {
+                        if (option.dataset.value === q.correctAnswer) {
+                            option.classList.add('correct');
+                        }
+                    });
                 } else {
-                    feedbackEl.textContent = `Incorrect. Correct answer: ${q.correctAnswer}) ${q.options[q.correctAnswer.charCodeAt(0)-65]}`;
+                    // Incorrect answer
+                    currentStreak = 0;
+                    multiplier = 1;
+                    
+                    feedbackEl.textContent = `Incorrect. The correct answer is ${q.correctAnswer}) ${q.options[q.correctAnswer.charCodeAt(0) - 65]}`;
                     feedbackEl.className = "game-feedback incorrect";
-                    readText(`Incorrect. The correct answer is ${q.correctAnswer} ${q.options[q.correctAnswer.charCodeAt(0)-65]}`);
+                    readText(`Incorrect. The correct answer is ${q.correctAnswer} ${q.options[q.correctAnswer.charCodeAt(0) - 65]}`);
+                    
+                    // Highlight correct and incorrect options
+                    options.forEach(option => {
+                        if (option.dataset.value === q.correctAnswer) {
+                            option.classList.add('correct');
+                        } else if (option.dataset.value === answer.toUpperCase()) {
+                            option.classList.add('incorrect');
+                        }
+                    });
                 }
-                options.forEach(option => {
-                    if (option.dataset.value === q.correctAnswer) option.classList.add('highlighted');
-                });
-                setTimeout(() => { currentQuestion++; loadQuestion(); }, 4000);
+                
+                updateStats();
+                updatePerformanceData();
+                
+                // Move to next question after a delay
+                setTimeout(() => {
+                    currentQuestion++;
+                    loadQuestion();
+                }, 4000);
             }
-
+            
+            // Provide hint
+            function provideHint() {
+                const questionsByDifficulty = questions[currentDifficulty];
+                const q = questionsByDifficulty[currentQuestion];
+                
+                feedbackEl.textContent = `Hint: ${q.hint}`;
+                feedbackEl.className = "game-feedback";
+                readText(`Hint: ${q.hint}`);
+                
+                // Penalty for using hint
+                score = Math.max(0, score - 2);
+                updateScore();
+            }
+            
+            // Skip question
+            function skipQuestion() {
+                feedbackEl.textContent = "Question skipped";
+                feedbackEl.className = "game-feedback";
+                readText("Question skipped");
+                
+                // Penalty for skipping
+                score = Math.max(0, score - 5);
+                updateScore();
+                
+                // Move to next question after a delay
+                setTimeout(() => {
+                    currentQuestion++;
+                    loadQuestion();
+                }, 2000);
+            }
+            
+            // Text to Speech function
             function readText(text) {
                 if ('speechSynthesis' in window) {
-                    if (recognition && isListening) recognition.stop(); // pause listening
+                    // Stop any ongoing speech
+                    window.speechSynthesis.cancel();
+                    
+                    // Set flag to indicate system is speaking
+                    isSpeaking = true;
+                    
                     const speech = new SpeechSynthesisUtterance(text);
-                    speech.rate = 0.9; speech.pitch = 1;
-                    speech.onend = () => { setTimeout(startListening, 500); };
+                    speech.rate = 0.9;
+                    speech.pitch = 1;
+                    
+                    speech.onend = function() {
+                        isSpeaking = false;
+                        // Restart listening after a brief pause
+                        if (gameStarted) {
+                            setTimeout(startListening, 500);
+                        }
+                    };
+                    
                     window.speechSynthesis.speak(speech);
                 }
             }
-
+            
+            // Handle voice commands
             function processVoiceCommand(command) {
                 command = command.toLowerCase().trim();
-                if (command.includes("start") && currentQuestion === 0) { initGame(); return; }
-                if (command.includes("restart")) { initGame(); return; }
-                if (currentQuestion >= questions.length) return;
-
-                if (/\b(option\s*a|answer\s*a|option\s*1|answer\s*1|one)\b/.test(command)) {
+                console.log("Processing command:", command);
+                
+                // Check for specific command patterns
+                if (command === "start" && !gameStarted) {
+                    initGame();
+                    return;
+                }
+                
+                if (command === "restart") {
+                    initGame();
+                    return;
+                }
+                
+                if (!gameStarted) return;
+                
+                const questionsByDifficulty = questions[currentDifficulty];
+                if (currentQuestion >= questionsByDifficulty.length) return;
+                
+                // More precise command matching
+                if (/^(option\s*)?(a|1|one)$/i.test(command)) {
                     checkAnswer("A");
-                } else if (/\b(option\s*b|answer\s*b|option\s*2|answer\s*2|two)\b/.test(command)) {
+                } else if (/^(option\s*)?(b|2|two)$/i.test(command)) {
                     checkAnswer("B");
-                } else if (/\b(option\s*c|answer\s*c|option\s*3|answer\s*3|three)\b/.test(command)) {
+                } else if (/^(option\s*)?(c|3|three)$/i.test(command)) {
                     checkAnswer("C");
-                } else if (/\b(option\s*d|answer\s*d|option\s*4|answer\s*4|four)\b/.test(command)) {
+                } else if (/^(option\s*)?(d|4|four)$/i.test(command)) {
                     checkAnswer("D");
-                } else if (command.includes("next")) {
-                    currentQuestion++; loadQuestion();
-                } else if (command.includes("repeat")) {
-                    const q = questions[currentQuestion];
-                    readText(q.question + " Options: " + q.options.map((opt, i)=>`${String.fromCharCode(65+i)}: ${opt}`).join(", "));
-                } else if (command.includes("score")) {
-                    readText(`Your current score is ${score} out of ${currentQuestion}`);
+                } else if (command === "next") {
+                    currentQuestion++;
+                    loadQuestion();
+                } else if (command === "repeat") {
+                    const q = questionsByDifficulty[currentQuestion];
+                    readText(q.question + " Options: " + 
+                        q.options.map((opt, i) => `${String.fromCharCode(65 + i)}: ${opt}`).join(", "));
+                } else if (command === "score") {
+                    readText(`Your current score is ${score}. You have answered ${correctAnswers} out of ${totalAnswered} questions correctly.`);
+                } else if (command === "hint") {
+                    provideHint();
+                } else if (command === "skip") {
+                    skipQuestion();
                 } else {
-                    voiceStatus.textContent = "Command not recognized.";
+                    // If command not recognized, provide feedback and keep listening
+                    voiceStatus.textContent = "Command not recognized. Please try again.";
                     readText("Sorry, I didn't understand that. Please try again.");
                 }
             }
+            
+            // Add floating icons to header
+            function addFloatingIcons() {
+                const floatingIcons = document.querySelector('.floating-icons');
+                const icons = ['fa-microphone', 'fa-brain', 'fa-book', 'fa-gamepad', 'fa-graduation-cap', 'fa-lightbulb'];
+                
+                for (let i = 0; i < 10; i++) {
+                    const icon = document.createElement('div');
+                    icon.className = 'floating-icon';
+                    icon.style.top = `${Math.random() * 100}%`;
+                    icon.style.left = `${Math.random() * 100}%`;
+                    icon.style.animationDuration = `${15 + Math.random() * 10}s`;
+                    icon.style.animationDelay = `${Math.random() * 5}s`;
+                    
+                    const iTag = document.createElement('i');
+                    iTag.className = `fas ${icons[Math.floor(Math.random() * icons.length)]}`;
+                    icon.appendChild(iTag);
+                    
+                    floatingIcons.appendChild(icon);
+                }
+            }
+            
+            // Initialize the page
+            addFloatingIcons();
+            
+            // Add click handlers for options (for accessibility)
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    if (gameStarted) {
+                        checkAnswer(this.dataset.value);
+                    }
+                });
+            });
         });
     </script>
 </body>
-</html
+</html>
